@@ -133,6 +133,25 @@ export class PSTFolder extends PSTObject {
       throw err
     }
   }
+  // fallback to children as listed in the descriptor b-tree
+  // console.log(`PSTFolder::initEmailsTable Can't get child folders for folder {this.displayName}, resorting to using alternate tree`);
+  private initFallbackEmailsTable() {
+    const tree = this.pstFile.getChildDescriptorTree();
+    this.fallbackEmailsTable = [];
+    if (this.descriptorIndexNode) {
+      const allChildren = tree.get(this.descriptorIndexNode.descriptorIdentifier);
+      if (allChildren) {
+        // remove items that aren't messages
+        for (const node of allChildren) {
+          if (node != null &&
+            this.getNodeType(node.descriptorIdentifier) ==
+            PSTUtil.NID_TYPE_NORMAL_MESSAGE) {
+            this.fallbackEmailsTable.push(node);
+          }
+        }
+      }
+    }
+  }
 
   // get all of the children
   private initEmailsTable(): void {
@@ -155,12 +174,8 @@ export class PSTFolder extends PSTObject {
         long.fromNumber(folderDescriptorIndex)
       )
       let tmp = undefined
-      if (
-        folderDescriptor.localDescriptorsOffsetIndexIdentifier.greaterThan(0)
-      ) {
-        tmp = this.pstFile.getPSTDescriptorItems(
-          folderDescriptor.localDescriptorsOffsetIndexIdentifier
-        )
+      if (folderDescriptor.localDescriptorsOffsetIndexIdentifier.greaterThan(0)) {
+        tmp = this.pstFile.getPSTDescriptorItems(folderDescriptor.localDescriptorsOffsetIndexIdentifier)
       }
       const offsetIndexItem = this.pstFile.getOffsetIndexNode(
         folderDescriptor.dataOffsetIndexIdentifier
@@ -169,27 +184,16 @@ export class PSTFolder extends PSTObject {
         this.pstFile,
         offsetIndexItem
       )
-      this.emailsTable = new PSTTable7C(pstNodeInputStream, tmp, 0x67f2)
-    } catch (err) {
-      // fallback to children as listed in the descriptor b-tree
-      // console.log(`PSTFolder::initEmailsTable Can't get child folders for folder {this.displayName}, resorting to using alternate tree`);
-      const tree = this.pstFile.getChildDescriptorTree()
-      this.fallbackEmailsTable = []
-      const allChildren = tree.get(
-        this.descriptorIndexNode.descriptorIdentifier
-      )
-      if (allChildren) {
-        // remove items that aren't messages
-        for (const node of allChildren) {
-          if (
-            node != null &&
-            this.getNodeType(node.descriptorIdentifier) ==
-              PSTUtil.NID_TYPE_NORMAL_MESSAGE
-          ) {
-            this.fallbackEmailsTable.push(node)
-          }
-        }
+      this.emailsTable = new PSTTable7C(pstNodeInputStream, tmp, 0x67f2);
+      if (!this.emailsTable || (this.contentCount != this.emailsTable.rowCount)) {
+        /**
+         * Found that contentCount should be same as email count
+         */
+        this.emailsTable = null;
+        this.initFallbackEmailsTable();
       }
+    } catch (err) {
+      this.initFallbackEmailsTable();
     }
   }
 

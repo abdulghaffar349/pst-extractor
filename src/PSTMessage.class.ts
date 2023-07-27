@@ -12,6 +12,7 @@ import { PSTUtil } from './PSTUtil.class'
 import { LZFu } from './LZFu.class'
 import { PSTAttachment } from './PSTAttachment.class'
 import { PSTRecipient } from './PSTRecipient.class'
+import { PSTTableItem } from './PSTTableItem.class'
 
 enum PidTagMessageFlags {
   MSGFLAG_READ = 0x01,
@@ -232,7 +233,21 @@ export class PSTMessage extends PSTObject {
     }
     return this.recipientTable ? this.recipientTable.rowCount : 0
   }
-
+  /**
+   * * Get all recipients.
+   * @returns {Map<number, PSTTableItem>[]}
+   * @memberof PSTMessage
+   */
+  getRecipients(): Map<number, PSTTableItem>[] {
+    if (!this.recipientTable) {
+      this.processRecipients();
+    }
+    if (!this.recipientTable) {
+      console.error('PSTMessage::getRecipients recipientTable is null')
+      return []
+    }
+    return this.recipientTable.getItems();
+  }
   /**
    * Get specific recipient.
    * @param {number} recipientNumber

@@ -11,6 +11,8 @@ import { PSTNodeInputStream } from './PSTNodeInputStream.class'
 import { PSTTableBC } from './PSTTableBC.class'
 import { PSTTask } from './PSTTask.class'
 import { PSTActivity } from './PSTActivity.class'
+import { OutlookProperties } from './OutlookProperties'
+import { PSTTableItem } from './PSTTableItem.class'
 
 /**
  * Utility functions for PST components
@@ -963,5 +965,32 @@ export class PSTUtil {
     const epochDiff: long = long.fromValue('11644473600000')
     const msSince19700101: long = msSince16010101.subtract(epochDiff)
     return new Date(msSince19700101.toNumber())
+  }
+
+  public static getStringItem(item: { entryValueType?: number, data: Buffer } | undefined) {
+    if (!item) {
+      return "";
+    }
+    const stringType = item?.entryValueType ?? 0;
+    try {
+      return PSTUtil.createJavascriptString(item.data, stringType);
+    }
+    catch (err) {
+      console.error('getStringItem error decoding string\n' + err);
+      return '';
+    }
+  }
+
+  public static getSMTPAddress(item: Map<number, PSTTableItem>) {
+    // If the recipient address type is SMTP, we can simply return the recipient address.
+    const addressType = PSTUtil.getStringItem(item.get(OutlookProperties.PR_ADDRTYPE));
+    if (addressType && addressType.toLowerCase() === 'smtp') {
+      const addr = PSTUtil.getStringItem(item.get(OutlookProperties.PR_EMAIL_ADDRESS));
+      if (addr != null && addr.length != 0) {
+        return addr;
+      }
+    }
+    // Otherwise, we have to hope the SMTP address is present as the PidTagPrimarySmtpAddress property.
+    return PSTUtil.getStringItem(item.get(OutlookProperties.PR_SMTP_ADDRESS));
   }
 }
