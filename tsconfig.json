@@ -1,25 +1,17 @@
 {
     "compilerOptions": {
+        "target": "ES6",
+        "module": "CommonJS",
         "declaration": true,
-        "module": "commonjs",
-        "noImplicitAny": true,
-        "outDir": "./dist",
-        "target": "es6",
-        "moduleResolution": "Node",
-        "esModuleInterop": true,
+        "outDir": "dist",
         "allowSyntheticDefaultImports": true,
-    },
-    "types": [
-        "node"
-    ],
-    "typeRoots": [
-        "node_modules/@types"
-    ],
-    "exclude": [
-        "node_modules",
-        "src/__tests__/*"
-    ],
-    "include": [
-        "src/**/*"
-    ]
+        "esModuleInterop": true,
+        "moduleResolution": "Node",
+        "types": [
+            "node"
+        ],
+        "typeRoots": [
+            "node_modules/@types"
+        ]
+    }
 }
