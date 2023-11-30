@@ -196,6 +196,25 @@ export class PSTFolder extends PSTObject {
       this.initFallbackEmailsTable();
     }
   }
+  /**
+   * Forces an update to the current email index by incrementing it. In some cases we have some emails in the file that are corrupted e.g findBtree issues
+   * in the case we can bypass that email by updating index
+   * @public
+   * @function
+   * @returns {void}
+   */
+  public forceUpdateEmailIndex(): void {
+    this.currentEmailIndex++;
+  }
+  /**
+   * Retrieves the current email index.
+   * @public
+   * @function
+   * @returns {number} The current email index.
+   */
+  public getEmailIndex(): number {
+    return this.currentEmailIndex;
+  }
 
   /**
    * Get the next child of this folder. As there could be thousands of emails, we have these
